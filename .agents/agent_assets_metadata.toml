@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "sjDgV9kA3nN-KNRNBNWw9"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "timeflow student planner icon"
