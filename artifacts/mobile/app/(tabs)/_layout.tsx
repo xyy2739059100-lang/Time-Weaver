@@ -14,15 +14,15 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Today</Label>
+        <Label>今天</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="calendar">
         <Icon sf={{ default: "calendar", selected: "calendar.badge.plus" }} />
-        <Label>Calendar</Label>
+        <Label>日历</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="schedule">
         <Icon sf={{ default: "tablecells", selected: "tablecells.fill" }} />
-        <Label>Schedule</Label>
+        <Label>课程表</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -52,51 +52,58 @@ function ClassicTabLayout() {
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={100}
+              intensity={90}
               tint={isDark ? "dark" : "light"}
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
             <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.card },
+              ]}
             />
           ) : null,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" as const },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600" as const,
+          letterSpacing: 0.2,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Today",
+          title: "今天",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
+              <SymbolView name="house" tintColor={color} size={23} />
             ) : (
-              <Feather name="home" size={22} color={color} />
+              <Feather name="home" size={21} color={color} />
             ),
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
-          title: "Calendar",
+          title: "日历",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="calendar" tintColor={color} size={24} />
+              <SymbolView name="calendar" tintColor={color} size={23} />
             ) : (
-              <Feather name="calendar" size={22} color={color} />
+              <Feather name="calendar" size={21} color={color} />
             ),
         }}
       />
       <Tabs.Screen
         name="schedule"
         options={{
-          title: "Schedule",
+          title: "课程表",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="tablecells" tintColor={color} size={24} />
+              <SymbolView name="tablecells" tintColor={color} size={23} />
             ) : (
-              <Feather name="grid" size={22} color={color} />
+              <Feather name="grid" size={21} color={color} />
             ),
         }}
       />

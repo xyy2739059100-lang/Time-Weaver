@@ -7,30 +7,28 @@ import React, {
   useState,
 } from "react";
 
-export type SubjectColor = keyof typeof SUBJECT_COLORS;
-
 export const SUBJECT_COLORS: Record<string, string> = {
-  math: "#BFD7FF",
-  english: "#D1F2D3",
-  history: "#FFF3C4",
-  science: "#F2D9FF",
-  art: "#FFD9D9",
-  pe: "#D9F2F2",
-  music: "#FFE8CC",
-  cs: "#CCE5FF",
-  other: "#E8E8E8",
+  数学: "#C4CDD6",
+  英语: "#C8D4C4",
+  历史: "#D8CCBC",
+  理科: "#D0C4D4",
+  艺术: "#D4C4C4",
+  体育: "#C8D0C8",
+  音乐: "#D8CCBC",
+  计算机: "#C4CCCC",
+  其他: "#D0CCCA",
 };
 
 export const SUBJECT_TEXT_COLORS: Record<string, string> = {
-  math: "#1A4DB3",
-  english: "#1A6B28",
-  history: "#7A5C00",
-  science: "#6B1A9E",
-  art: "#9E1A1A",
-  pe: "#1A6B6B",
-  music: "#9E5C00",
-  cs: "#004DA3",
-  other: "#555555",
+  数学: "#4A6070",
+  英语: "#3A5A42",
+  历史: "#6A5040",
+  理科: "#5A4A6A",
+  艺术: "#6A4444",
+  体育: "#3A5A44",
+  音乐: "#6A5040",
+  计算机: "#3A5060",
+  其他: "#5A5450",
 };
 
 export interface Task {
@@ -39,7 +37,7 @@ export interface Task {
   subject: string;
   date: string;
   completed: boolean;
-  priority: "low" | "medium" | "high";
+  priority: "低" | "中" | "高";
   notes?: string;
 }
 

@@ -22,9 +22,9 @@ interface Props {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: "#FF3B30",
-  medium: "#FF9500",
-  low: "#34C759",
+  高: "#B88A8A",
+  中: "#C4A882",
+  低: "#8FAF96",
 };
 
 export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
@@ -75,19 +75,19 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
     })
   ).current;
 
-  const bgColor = SUBJECT_COLORS[task.subject] ?? SUBJECT_COLORS.other;
-  const textColor = SUBJECT_TEXT_COLORS[task.subject] ?? SUBJECT_TEXT_COLORS.other;
+  const bgColor = SUBJECT_COLORS[task.subject] ?? SUBJECT_COLORS["其他"];
+  const textColor = SUBJECT_TEXT_COLORS[task.subject] ?? SUBJECT_TEXT_COLORS["其他"];
 
   return (
-    <View style={[styles.wrapper]}>
+    <View style={styles.wrapper}>
       <Animated.View
         style={[
           styles.actionBg,
           { opacity: actionOpacity, backgroundColor: colors.success },
         ]}
       >
-        <Feather name="check" size={22} color="#fff" />
-        <Text style={styles.actionLabel}>Done</Text>
+        <Feather name="check" size={20} color="#fff" />
+        <Text style={styles.actionLabel}>完成</Text>
       </Animated.View>
 
       <Animated.View
@@ -98,7 +98,7 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
             borderRadius: colors.radius,
             transform: [{ translateX }],
             opacity,
-            shadowColor: "#000",
+            shadowColor: "#2C2A28",
           },
         ]}
         {...panResponder.panHandlers}
@@ -122,7 +122,7 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
             }}
           >
             {task.completed && (
-              <Feather name="check" size={12} color="#fff" />
+              <Feather name="check" size={11} color="#fff" />
             )}
           </TouchableOpacity>
 
@@ -140,12 +140,7 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
               {task.title}
             </Text>
             <View style={styles.meta}>
-              <View
-                style={[
-                  styles.subjectTag,
-                  { backgroundColor: bgColor },
-                ]}
-              >
+              <View style={[styles.subjectTag, { backgroundColor: bgColor }]}>
                 <Text style={[styles.subjectText, { color: textColor }]}>
                   {task.subject}
                 </Text>
@@ -156,11 +151,14 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
                   { backgroundColor: PRIORITY_COLORS[task.priority] ?? "#ccc" },
                 ]}
               />
+              <Text style={[styles.priorityLabel, { color: colors.mutedForeground }]}>
+                {task.priority}优先
+              </Text>
             </View>
           </View>
 
           <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={8}>
-            <Feather name="trash-2" size={16} color={colors.mutedForeground} />
+            <Feather name="trash-2" size={15} color={colors.mutedForeground} />
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>
@@ -179,7 +177,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    borderRadius: 12,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     paddingLeft: 18,
@@ -189,11 +187,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+    letterSpacing: 0.3,
   },
   card: {
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2,
   },
   inner: {
@@ -212,17 +211,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: 4,
+    gap: 5,
   },
   title: {
     fontSize: 15,
-    fontFamily: Platform.OS === "ios" ? "System" : undefined,
     fontWeight: "500",
+    letterSpacing: 0.1,
   },
   meta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   subjectTag: {
     paddingHorizontal: 8,
@@ -232,12 +231,14 @@ const styles = StyleSheet.create({
   subjectText: {
     fontSize: 11,
     fontWeight: "600",
-    textTransform: "capitalize",
   },
   priorityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  priorityLabel: {
+    fontSize: 11,
   },
   deleteBtn: {
     padding: 4,

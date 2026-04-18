@@ -15,12 +15,15 @@ import { AddTimeBlockModal } from "@/components/AddTimeBlockModal";
 import { TimeBlock, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 const START_HOUR = 8;
 const END_HOUR = 23;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
+const HOURS = Array.from(
+  { length: END_HOUR - START_HOUR },
+  (_, i) => i + START_HOUR
+);
 const CELL_HEIGHT = 52;
-const TIME_COL_WIDTH = 44;
+const TIME_COL_WIDTH = 40;
 
 function getCurrentTimeOffset(): number | null {
   const now = new Date();
@@ -38,7 +41,13 @@ function getCurrentDayIndex(): number {
 export default function ScheduleScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { timeBlocks, addTimeBlock, editTimeBlock, deleteTimeBlock, copyLastWeekBlocks } = useTasks();
+  const {
+    timeBlocks,
+    addTimeBlock,
+    editTimeBlock,
+    deleteTimeBlock,
+    copyLastWeekBlocks,
+  } = useTasks();
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
@@ -70,19 +79,19 @@ export default function ScheduleScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Fixed header */}
+      {/* Top bar */}
       <View
         style={[
           styles.topBar,
           {
-            paddingTop: topPaddingWeb + 12,
+            paddingTop: topPaddingWeb + 14,
             backgroundColor: colors.card,
             borderBottomColor: colors.border,
           },
         ]}
       >
         <Text style={[styles.screenTitle, { color: colors.foreground }]}>
-          Weekly Schedule
+          课程表
         </Text>
         <TouchableOpacity
           style={[styles.copyBtn, { borderColor: colors.primary }]}
@@ -91,16 +100,21 @@ export default function ScheduleScreen() {
             copyLastWeekBlocks();
           }}
         >
-          <Feather name="copy" size={14} color={colors.primary} />
-          <Text style={[styles.copyBtnText, { color: colors.primary }]}>Copy Week</Text>
+          <Feather name="copy" size={13} color={colors.primary} />
+          <Text style={[styles.copyBtnText, { color: colors.primary }]}>
+            复制上周
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Day headers row */}
+      {/* Day headers */}
       <View
         style={[
           styles.dayHeaders,
-          { backgroundColor: colors.card, borderBottomColor: colors.border },
+          {
+            backgroundColor: colors.card,
+            borderBottomColor: colors.border,
+          },
         ]}
       >
         <View style={{ width: TIME_COL_WIDTH }} />
@@ -110,8 +124,7 @@ export default function ScheduleScreen() {
               style={[
                 styles.dayHeaderText,
                 {
-                  color:
-                    i === todayIdx ? colors.primary : colors.mutedForeground,
+                  color: i === todayIdx ? colors.primary : colors.mutedForeground,
                   fontWeight: i === todayIdx ? "700" : "500",
                 },
               ]}
@@ -119,13 +132,15 @@ export default function ScheduleScreen() {
               {d}
             </Text>
             {i === todayIdx && (
-              <View style={[styles.todayDot, { backgroundColor: colors.primary }]} />
+              <View
+                style={[styles.todayDot, { backgroundColor: colors.primary }]}
+              />
             )}
           </View>
         ))}
       </View>
 
-      {/* Scrollable grid */}
+      {/* Grid */}
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -146,8 +161,10 @@ export default function ScheduleScreen() {
           <View style={{ width: TIME_COL_WIDTH }}>
             {HOURS.map((h) => (
               <View key={h} style={[styles.timeCell, { height: CELL_HEIGHT }]}>
-                <Text style={[styles.timeText, { color: colors.mutedForeground }]}>
-                  {h.toString().padStart(2, "0")}
+                <Text
+                  style={[styles.timeText, { color: colors.mutedForeground }]}
+                >
+                  {h}时
                 </Text>
               </View>
             ))}
@@ -156,7 +173,6 @@ export default function ScheduleScreen() {
           {/* Day columns */}
           {DAYS.map((d, dayIdx) => (
             <View key={d} style={styles.dayColumn}>
-              {/* Hour cells */}
               {HOURS.map((h) => (
                 <TouchableOpacity
                   key={h}
@@ -167,7 +183,7 @@ export default function ScheduleScreen() {
                       borderColor: colors.border,
                       backgroundColor:
                         dayIdx === todayIdx
-                          ? colors.primary + "06"
+                          ? colors.primary + "08"
                           : "transparent",
                     },
                   ]}
@@ -175,7 +191,6 @@ export default function ScheduleScreen() {
                 />
               ))}
 
-              {/* Time blocks */}
               {(blocksByDay[dayIdx] ?? []).map((block) => {
                 const topOffset = (block.startHour - START_HOUR) * CELL_HEIGHT;
                 const blockHeight = block.durationHours * CELL_HEIGHT - 2;
@@ -192,36 +207,45 @@ export default function ScheduleScreen() {
                       },
                     ]}
                     onPress={() => setEditingBlock(block)}
-                    activeOpacity={0.85}
+                    activeOpacity={0.82}
                   >
                     <Text
-                      style={[styles.blockTitle, { color: block.textColor }]}
+                      style={[
+                        styles.blockTitle,
+                        { color: block.textColor },
+                      ]}
                       numberOfLines={2}
                     >
                       {block.title}
                     </Text>
                     {block.durationHours >= 1 && (
-                      <Text style={[styles.blockTime, { color: block.textColor }]}>
-                        {block.startHour.toString().padStart(2, "0")}:00–
-                        {(block.startHour + block.durationHours)
-                          .toString()
-                          .padStart(2, "0")}
-                        :00
+                      <Text
+                        style={[
+                          styles.blockTime,
+                          { color: block.textColor },
+                        ]}
+                      >
+                        {block.startHour}–
+                        {block.startHour + block.durationHours}时
                       </Text>
                     )}
                   </TouchableOpacity>
                 );
               })}
 
-              {/* Current time line */}
               {dayIdx === todayIdx && timeOffset !== null && (
                 <View
                   style={[
-                    styles.currentTimeLine,
+                    styles.timeLine,
                     { top: timeOffset, backgroundColor: colors.today },
                   ]}
                 >
-                  <View style={[styles.currentTimeDot, { backgroundColor: colors.today }]} />
+                  <View
+                    style={[
+                      styles.timeDot,
+                      { backgroundColor: colors.today },
+                    ]}
+                  />
                 </View>
               )}
             </View>
@@ -257,15 +281,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingHorizontal: 22,
+    paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  screenTitle: { fontSize: 22, fontWeight: "700" },
+  screenTitle: { fontSize: 22, fontWeight: "700", letterSpacing: 0.2 },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
@@ -274,55 +298,47 @@ const styles = StyleSheet.create({
   copyBtnText: { fontSize: 13, fontWeight: "600" },
   dayHeaders: {
     flexDirection: "row",
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  dayHeaderCell: {
-    flex: 1,
-    alignItems: "center",
-    gap: 3,
-  },
-  dayHeaderText: { fontSize: 12 },
+  dayHeaderCell: { flex: 1, alignItems: "center", gap: 3 },
+  dayHeaderText: { fontSize: 11 },
   todayDot: { width: 4, height: 4, borderRadius: 2 },
   gridWrapper: { flexDirection: "row" },
   timeCell: {
     justifyContent: "flex-start",
     alignItems: "flex-end",
-    paddingRight: 8,
+    paddingRight: 6,
     paddingTop: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: "transparent",
   },
-  timeText: { fontSize: 10, fontWeight: "500" },
+  timeText: { fontSize: 9, fontWeight: "500" },
   dayColumn: { flex: 1, position: "relative" },
-  hourCell: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  hourCell: { borderTopWidth: StyleSheet.hairlineWidth },
   block: {
     position: "absolute",
     left: 1,
     right: 1,
     borderRadius: 6,
-    borderLeftWidth: 3,
+    borderLeftWidth: 2.5,
     paddingHorizontal: 4,
-    paddingVertical: 3,
+    paddingVertical: 4,
     overflow: "hidden",
   },
-  blockTitle: { fontSize: 10, fontWeight: "700", lineHeight: 13 },
-  blockTime: { fontSize: 9, fontWeight: "400", lineHeight: 12, marginTop: 1 },
-  currentTimeLine: {
+  blockTitle: { fontSize: 9, fontWeight: "700", lineHeight: 12 },
+  blockTime: { fontSize: 8, lineHeight: 11, marginTop: 1 },
+  timeLine: {
     position: "absolute",
     left: 0,
     right: 0,
-    height: 2,
+    height: 1.5,
     borderRadius: 1,
   },
-  currentTimeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  timeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     position: "absolute",
-    left: -4,
-    top: -3,
+    left: -3,
+    top: -2.5,
   },
 });

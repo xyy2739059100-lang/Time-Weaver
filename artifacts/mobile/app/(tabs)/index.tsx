@@ -40,11 +40,19 @@ function getMonthRange() {
 }
 
 const GREETINGS = [
-  "You've got this!",
-  "Stay focused today.",
-  "Make it count!",
-  "One step at a time.",
-  "You're doing great!",
+  "好好努力，前途无量。",
+  "今天也要加油哦。",
+  "专注当下，成就未来。",
+  "每一步都算数。",
+  "你比你想象的更强。",
+  "静下心来，慢慢来。",
+  "今天的努力，明天的收获。",
+];
+
+const WEEK_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+const MONTH_NAMES = [
+  "1月", "2月", "3月", "4月", "5月", "6月",
+  "7月", "8月", "9月", "10月", "11月", "12月",
 ];
 
 export default function DashboardScreen() {
@@ -55,12 +63,10 @@ export default function DashboardScreen() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
   const today = todayStr();
-  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const dateLabel = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-  });
-  const greeting = GREETINGS[new Date().getDay() % GREETINGS.length];
+  const now = new Date();
+  const dayName = WEEK_DAYS[now.getDay()];
+  const dateLabel = `${now.getFullYear()}年${MONTH_NAMES[now.getMonth()]}${now.getDate()}日`;
+  const greeting = GREETINGS[now.getDay() % GREETINGS.length];
 
   const week = getWeekRange();
   const month = getMonthRange();
@@ -76,15 +82,25 @@ export default function DashboardScreen() {
   const weekTasks = useMemo(
     () =>
       tasks
-        .filter((t) => t.date > today && t.date >= week.start && t.date <= week.end && !t.completed)
+        .filter(
+          (t) =>
+            t.date > today &&
+            t.date >= week.start &&
+            t.date <= week.end &&
+            !t.completed
+        )
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 5),
     [tasks, today, week]
   );
-  const monthTasks = useMemo(
+  const monthCount = useMemo(
     () =>
       tasks.filter(
-        (t) => t.date > week.end && t.date >= month.start && t.date <= month.end && !t.completed
+        (t) =>
+          t.date > week.end &&
+          t.date >= month.start &&
+          t.date <= month.end &&
+          !t.completed
       ).length,
     [tasks, week, month]
   );
@@ -92,7 +108,9 @@ export default function DashboardScreen() {
   const completionRate =
     todayTasks.length + completedToday.length > 0
       ? Math.round(
-          (completedToday.length / (todayTasks.length + completedToday.length)) * 100
+          (completedToday.length /
+            (todayTasks.length + completedToday.length)) *
+            100
         )
       : 0;
 
@@ -103,55 +121,78 @@ export default function DashboardScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: topPaddingWeb + 16,
+          paddingTop: topPaddingWeb + 20,
           paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 100,
-          paddingHorizontal: 20,
-          gap: 24,
+          paddingHorizontal: 22,
+          gap: 28,
         }}
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={[styles.dayName, { color: colors.mutedForeground }]}>
-              {todayName}, {dateLabel}
+              {dayName}　{dateLabel}
             </Text>
-            <Text style={[styles.greeting, { color: colors.foreground }]}>{greeting}</Text>
+            <Text style={[styles.greeting, { color: colors.foreground }]}>
+              {greeting}
+            </Text>
           </View>
           <View
             style={[
-              styles.progressCircle,
-              { borderColor: completionRate === 100 ? colors.success : colors.primary },
+              styles.progressRing,
+              {
+                borderColor:
+                  completionRate === 100 ? colors.success : colors.primary,
+              },
             ]}
           >
             <Text
               style={[
-                styles.progressText,
-                { color: completionRate === 100 ? colors.success : colors.primary },
+                styles.progressNum,
+                {
+                  color:
+                    completionRate === 100 ? colors.success : colors.primary,
+                },
               ]}
             >
-              {completionRate}%
+              {completionRate}
+            </Text>
+            <Text
+              style={[
+                styles.progressPct,
+                {
+                  color:
+                    completionRate === 100 ? colors.success : colors.mutedForeground,
+                },
+              ]}
+            >
+              %
             </Text>
           </View>
         </View>
 
         {/* Today */}
         <View>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: colors.today }]} />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Today</Text>
-            <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
-              {todayTasks.length} remaining
+          <View style={styles.sectionRow}>
+            <View
+              style={[styles.sectionDot, { backgroundColor: colors.today }]}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              今天
+            </Text>
+            <Text style={[styles.sectionBadge, { color: colors.mutedForeground }]}>
+              {todayTasks.length > 0 ? `还剩 ${todayTasks.length} 项` : "全部完成"}
             </Text>
           </View>
 
           {todayTasks.length === 0 && completedToday.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-              <Feather name="sun" size={28} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                Nothing scheduled today.
+              <Feather name="sun" size={26} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
+                今天没有安排
               </Text>
-              <Text style={[styles.emptySubtext, { color: colors.mutedForeground }]}>
-                Time to recharge!
+              <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
+                好好休息，或者计划点什么？
               </Text>
             </View>
           ) : (
@@ -166,10 +207,8 @@ export default function DashboardScreen() {
                 />
               ))}
               {completedToday.length > 0 && (
-                <Text
-                  style={[styles.completedLabel, { color: colors.mutedForeground }]}
-                >
-                  {completedToday.length} completed
+                <Text style={[styles.completedHint, { color: colors.mutedForeground }]}>
+                  已完成 {completedToday.length} 项
                 </Text>
               )}
             </>
@@ -178,22 +217,26 @@ export default function DashboardScreen() {
 
         {/* This Week */}
         <View>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>This Week</Text>
-            <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
-              {weekTasks.length} upcoming
+          <View style={styles.sectionRow}>
+            <View
+              style={[styles.sectionDot, { backgroundColor: colors.primary }]}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              本周待办
+            </Text>
+            <Text style={[styles.sectionBadge, { color: colors.mutedForeground }]}>
+              {weekTasks.length} 项即将到来
             </Text>
           </View>
 
           {weekTasks.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-              <Feather name="calendar" size={28} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                Clear week ahead!
+              <Feather name="calendar" size={26} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
+                本周轻松无事
               </Text>
-              <Text style={[styles.emptySubtext, { color: colors.mutedForeground }]}>
-                Plan something amazing.
+              <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
+                趁机规划一些学习目标吧
               </Text>
             </View>
           ) : (
@@ -209,22 +252,21 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Monthly Goals */}
+        {/* Monthly */}
         <View style={[styles.monthCard, { backgroundColor: colors.card }]}>
-          <View style={styles.sectionHeader}>
+          <View style={styles.sectionRow}>
             <View
               style={[styles.sectionDot, { backgroundColor: colors.warning }]}
             />
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Month Ahead
+              本月计划
             </Text>
           </View>
-          <Text style={[styles.monthCount, { color: colors.primary }]}>
-            {monthTasks}
+          <Text style={[styles.monthBigNum, { color: colors.primary }]}>
+            {monthCount}
           </Text>
-          <Text style={[styles.monthLabel, { color: colors.mutedForeground }]}>
-            tasks planned for{" "}
-            {new Date().toLocaleDateString("en-US", { month: "long" })}
+          <Text style={[styles.monthSub, { color: colors.mutedForeground }]}>
+            项任务安排在 {MONTH_NAMES[now.getMonth()]}
           </Text>
         </View>
       </ScrollView>
@@ -267,48 +309,66 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
   },
-  dayName: { fontSize: 14, fontWeight: "500", marginBottom: 4 },
-  greeting: { fontSize: 24, fontWeight: "700" },
-  progressCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 3,
+  dayName: {
+    fontSize: 13,
+    fontWeight: "400",
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  greeting: {
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+    lineHeight: 30,
+  },
+  progressRing: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 2.5,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    gap: 1,
   },
-  progressText: { fontSize: 14, fontWeight: "700" },
-  sectionHeader: {
+  progressNum: { fontSize: 16, fontWeight: "700" },
+  progressPct: { fontSize: 10, fontWeight: "500", alignSelf: "flex-end", marginBottom: 2 },
+  sectionRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginBottom: 12,
   },
-  sectionDot: { width: 8, height: 8, borderRadius: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1 },
-  sectionCount: { fontSize: 13 },
+  sectionDot: { width: 7, height: 7, borderRadius: 3.5 },
+  sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1, letterSpacing: 0.2 },
+  sectionBadge: { fontSize: 12, letterSpacing: 0.1 },
   emptyCard: {
-    borderRadius: 14,
-    padding: 28,
+    borderRadius: 16,
+    padding: 30,
     alignItems: "center",
     gap: 8,
   },
-  emptyText: { fontSize: 16, fontWeight: "600" },
-  emptySubtext: { fontSize: 13 },
-  completedLabel: { fontSize: 13, marginTop: 4, marginLeft: 2 },
+  emptyTitle: { fontSize: 15, fontWeight: "600" },
+  emptyHint: { fontSize: 12 },
+  completedHint: { fontSize: 12, marginTop: 4, marginLeft: 2 },
   monthCard: {
-    borderRadius: 16,
-    padding: 20,
-    gap: 4,
+    borderRadius: 18,
+    padding: 22,
+    gap: 6,
   },
-  monthCount: { fontSize: 48, fontWeight: "800", lineHeight: 52 },
-  monthLabel: { fontSize: 15 },
+  monthBigNum: {
+    fontSize: 52,
+    fontWeight: "800",
+    lineHeight: 58,
+    letterSpacing: -1,
+  },
+  monthSub: { fontSize: 14 },
   fab: {
     position: "absolute",
-    right: 20,
+    right: 22,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -316,8 +376,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     elevation: 8,
   },
 });

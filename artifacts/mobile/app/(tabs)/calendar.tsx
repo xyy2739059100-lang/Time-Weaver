@@ -16,10 +16,10 @@ import { TaskCard } from "@/components/TaskCard";
 import { Task, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "一月", "二月", "三月", "四月", "五月", "六月",
+  "七月", "八月", "九月", "十月", "十一月", "十二月",
 ];
 
 function toDateStr(y: number, m: number, d: number) {
@@ -56,18 +56,29 @@ export default function CalendarScreen() {
   }, [tasks]);
 
   const selectedTasks = useMemo(
-    () => tasks.filter((t) => t.date === selectedDate).sort((a, b) => a.completed ? 1 : -1),
+    () =>
+      tasks
+        .filter((t) => t.date === selectedDate)
+        .sort((a, b) => (a.completed ? 1 : -1)),
     [tasks, selectedDate]
   );
 
   const goToPrevMonth = () => {
-    if (month === 0) { setMonth(11); setYear(year - 1); }
-    else setMonth(month - 1);
+    if (month === 0) {
+      setMonth(11);
+      setYear(year - 1);
+    } else {
+      setMonth(month - 1);
+    }
   };
 
   const goToNextMonth = () => {
-    if (month === 11) { setMonth(0); setYear(year + 1); }
-    else setMonth(month + 1);
+    if (month === 11) {
+      setMonth(0);
+      setYear(year + 1);
+    } else {
+      setMonth(month + 1);
+    }
   };
 
   const topPaddingWeb = Platform.OS === "web" ? 67 : insets.top;
@@ -76,8 +87,14 @@ export default function CalendarScreen() {
     ...Array(firstDayOfWeek).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-
   while (calendarCells.length % 7 !== 0) calendarCells.push(null);
+
+  const selectedDateLabel = (() => {
+    if (selectedDate === todayStr) return "今天";
+    const d = new Date(selectedDate + "T12:00:00");
+    const dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+    return `${d.getMonth() + 1}月${d.getDate()}日　${dayNames[d.getDay()]}`;
+  })();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -87,38 +104,45 @@ export default function CalendarScreen() {
           paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 100,
         }}
       >
-        {/* Calendar Header */}
+        {/* Calendar card */}
         <View
           style={[
-            styles.calendarSection,
-            { paddingTop: topPaddingWeb + 16, backgroundColor: colors.card },
+            styles.calendarCard,
+            {
+              paddingTop: topPaddingWeb + 20,
+              backgroundColor: colors.card,
+            },
           ]}
         >
+          {/* Month nav */}
           <View style={styles.monthNav}>
-            <TouchableOpacity onPress={goToPrevMonth} hitSlop={12}>
-              <Feather name="chevron-left" size={22} color={colors.foreground} />
+            <TouchableOpacity onPress={goToPrevMonth} hitSlop={14}>
+              <Feather name="chevron-left" size={20} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={[styles.monthTitle, { color: colors.foreground }]}>
-              {MONTH_NAMES[month]} {year}
+              {year}年 {MONTH_NAMES[month]}
             </Text>
-            <TouchableOpacity onPress={goToNextMonth} hitSlop={12}>
-              <Feather name="chevron-right" size={22} color={colors.foreground} />
+            <TouchableOpacity onPress={goToNextMonth} hitSlop={14}>
+              <Feather name="chevron-right" size={20} color={colors.foreground} />
             </TouchableOpacity>
           </View>
 
           {/* Day labels */}
           <View style={styles.dayLabels}>
             {DAY_NAMES.map((d) => (
-              <Text key={d} style={[styles.dayLabel, { color: colors.mutedForeground }]}>
+              <Text
+                key={d}
+                style={[styles.dayLabel, { color: colors.mutedForeground }]}
+              >
                 {d}
               </Text>
             ))}
           </View>
 
-          {/* Calendar grid */}
+          {/* Grid */}
           <View style={styles.grid}>
             {calendarCells.map((day, idx) => {
-              if (!day) return <View key={`empty-${idx}`} style={styles.cell} />;
+              if (!day) return <View key={`e-${idx}`} style={styles.cell} />;
               const dateStr = toDateStr(year, month, day);
               const isToday = dateStr === todayStr;
               const isSelected = dateStr === selectedDate;
@@ -137,14 +161,19 @@ export default function CalendarScreen() {
                     style={[
                       styles.dayCircle,
                       isSelected && { backgroundColor: colors.selectedDay },
-                      isToday && !isSelected && { backgroundColor: colors.today },
+                      isToday && !isSelected && {
+                        backgroundColor: colors.today,
+                      },
                     ]}
                   >
                     <Text
                       style={[
                         styles.dayNum,
                         { color: colors.foreground },
-                        (isSelected || isToday) && { color: "#fff", fontWeight: "700" },
+                        (isSelected || isToday) && {
+                          color: "#fff",
+                          fontWeight: "700",
+                        },
                       ]}
                     >
                       {day}
@@ -155,7 +184,9 @@ export default function CalendarScreen() {
                       style={[
                         styles.eventDot,
                         {
-                          backgroundColor: isToday ? "#fff" : colors.primary,
+                          backgroundColor: isToday
+                            ? "#fff"
+                            : colors.primary,
                         },
                       ]}
                     />
@@ -166,17 +197,11 @@ export default function CalendarScreen() {
           </View>
         </View>
 
-        {/* Selected Day Tasks */}
-        <View style={[styles.listSection, { paddingHorizontal: 20 }]}>
+        {/* Task list */}
+        <View style={[styles.listSection, { paddingHorizontal: 22 }]}>
           <View style={styles.listHeader}>
             <Text style={[styles.listTitle, { color: colors.foreground }]}>
-              {selectedDate === todayStr
-                ? "Today"
-                : new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
+              {selectedDateLabel}
             </Text>
             <TouchableOpacity
               style={[styles.addBtn, { backgroundColor: colors.primary }]}
@@ -185,19 +210,27 @@ export default function CalendarScreen() {
                 setShowAdd(true);
               }}
             >
-              <Feather name="plus" size={16} color="#fff" />
-              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>Add</Text>
+              <Feather name="plus" size={15} color="#fff" />
+              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>
+                添加
+              </Text>
             </TouchableOpacity>
           </View>
 
           {selectedTasks.length === 0 ? (
-            <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-              <Feather name="coffee" size={28} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                Nothing planned here.
+            <View
+              style={[styles.emptyState, { backgroundColor: colors.card }]}
+            >
+              <Feather name="coffee" size={26} color={colors.mutedForeground} />
+              <Text
+                style={[styles.emptyTitle, { color: colors.mutedForeground }]}
+              >
+                这天没有安排
               </Text>
-              <Text style={[styles.emptySubtext, { color: colors.mutedForeground }]}>
-                Enjoy the free time!
+              <Text
+                style={[styles.emptyHint, { color: colors.mutedForeground }]}
+              >
+                享受轻松时光吧
               </Text>
             </View>
           ) : (
@@ -234,37 +267,26 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  calendarSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+  calendarCard: {
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    shadowColor: "#2C2A28",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   monthNav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 18,
     paddingHorizontal: 4,
   },
-  monthTitle: { fontSize: 18, fontWeight: "700" },
-  dayLabels: {
-    flexDirection: "row",
-    marginBottom: 4,
-  },
-  dayLabel: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
+  monthTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
+  dayLabels: { flexDirection: "row", marginBottom: 4 },
+  dayLabel: { flex: 1, textAlign: "center", fontSize: 12, fontWeight: "500" },
+  grid: { flexDirection: "row", flexWrap: "wrap" },
   cell: {
     width: `${100 / 7}%` as `${number}%`,
     aspectRatio: 1,
@@ -280,34 +302,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayNum: { fontSize: 14 },
-  eventDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 1,
-  },
-  listSection: { paddingTop: 20, gap: 0 },
+  eventDot: { width: 4, height: 4, borderRadius: 2, marginTop: 1 },
+  listSection: { paddingTop: 22, gap: 0 },
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: 16,
   },
-  listTitle: { fontSize: 18, fontWeight: "700" },
+  listTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 5,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  emptyState: {
-    borderRadius: 14,
-    padding: 32,
-    alignItems: "center",
-    gap: 8,
-  },
-  emptyText: { fontSize: 16, fontWeight: "600" },
-  emptySubtext: { fontSize: 13 },
+  emptyState: { borderRadius: 16, padding: 30, alignItems: "center", gap: 8 },
+  emptyTitle: { fontSize: 15, fontWeight: "600" },
+  emptyHint: { fontSize: 12 },
 });

@@ -18,7 +18,7 @@ import { SUBJECT_COLORS, SUBJECT_TEXT_COLORS, Task } from "@/context/TasksContex
 import { useColors } from "@/hooks/useColors";
 
 const SUBJECTS = Object.keys(SUBJECT_COLORS);
-const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
+const PRIORITIES: Task["priority"][] = ["低", "中", "高"];
 
 interface Props {
   visible: boolean;
@@ -37,9 +37,9 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
   const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("other");
+  const [subject, setSubject] = useState("其他");
   const [date, setDate] = useState(defaultDate ?? todayStr());
-  const [priority, setPriority] = useState<Task["priority"]>("medium");
+  const [priority, setPriority] = useState<Task["priority"]>("中");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -51,9 +51,9 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
       setNotes(editTask.notes ?? "");
     } else {
       setTitle("");
-      setSubject("other");
+      setSubject("其他");
       setDate(defaultDate ?? todayStr());
-      setPriority("medium");
+      setPriority("中");
       setNotes("");
     }
   }, [editTask, defaultDate, visible]);
@@ -66,9 +66,9 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
   };
 
   const PRIORITY_COLORS: Record<Task["priority"], string> = {
-    low: "#34C759",
-    medium: "#FF9500",
-    high: "#FF3B30",
+    低: "#8FAF96",
+    中: "#C4A882",
+    高: "#B88A8A",
   };
 
   return (
@@ -91,7 +91,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
 
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-              {editTask ? "Edit Task" : "New Task"}
+              {editTask ? "编辑任务" : "新建任务"}
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Feather name="x" size={22} color={colors.mutedForeground} />
@@ -108,7 +108,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
                 styles.input,
                 { backgroundColor: colors.muted, color: colors.foreground },
               ]}
-              placeholder="Task title..."
+              placeholder="任务名称..."
               placeholderTextColor={colors.mutedForeground}
               value={title}
               onChangeText={setTitle}
@@ -117,7 +117,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
             />
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Subject</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>学科</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <View style={styles.row}>
                   {SUBJECTS.map((s) => {
@@ -131,7 +131,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
                           styles.subjectChip,
                           {
                             backgroundColor: bg,
-                            borderWidth: selected ? 2 : 0,
+                            borderWidth: selected ? 1.5 : 0,
                             borderColor: tc,
                           },
                         ]}
@@ -148,7 +148,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Priority</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>优先级</Text>
               <View style={[styles.row, { marginTop: 8 }]}>
                 {PRIORITIES.map((p) => (
                   <TouchableOpacity
@@ -176,7 +176,7 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Date</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>日期</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -191,14 +191,14 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Notes (optional)</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>备注（选填）</Text>
               <TextInput
                 style={[
                   styles.input,
                   styles.notesInput,
                   { backgroundColor: colors.muted, color: colors.foreground, marginTop: 8 },
                 ]}
-                placeholder="Any additional notes..."
+                placeholder="添加备注..."
                 placeholderTextColor={colors.mutedForeground}
                 value={notes}
                 onChangeText={setNotes}
@@ -215,8 +215,8 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
               onPress={handleSave}
               disabled={!title.trim()}
             >
-              <Text style={[styles.saveBtnText, { color: colors.primaryForeground }]}>
-                {editTask ? "Save Changes" : "Add Task"}
+              <Text style={[styles.saveBtnText, { color: "#fff" }]}>
+                {editTask ? "保存修改" : "添加任务"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -229,14 +229,14 @@ export function AddTaskModal({ visible, onClose, onSave, defaultDate, editTask }
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(44,42,40,0.3)",
   },
   keyboardView: {
     justifyContent: "flex-end",
   },
   sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     paddingTop: 12,
     maxHeight: "92%",
   },
@@ -257,12 +257,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
+    letterSpacing: 0.2,
   },
   input: {
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderRadius: 12,
     fontSize: 15,
+    letterSpacing: 0.1,
   },
   notesInput: {
     minHeight: 80,
@@ -270,35 +272,32 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   row: {
     flexDirection: "row",
     gap: 8,
   },
   subjectChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     borderRadius: 20,
   },
   subjectChipText: {
     fontSize: 13,
     fontWeight: "600",
-    textTransform: "capitalize",
   },
   priorityBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 11,
+    borderRadius: 12,
     alignItems: "center",
   },
   priorityText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
-    textTransform: "capitalize",
   },
   saveBtn: {
     paddingVertical: 16,
@@ -309,5 +308,6 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 16,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

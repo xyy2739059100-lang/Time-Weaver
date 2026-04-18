@@ -1,108 +1,108 @@
 const colors = {
   light: {
-    text: "#1C1C1E",
-    tint: "#007AFF",
+    text: "#2C2A28",
+    tint: "#8B9EA8",
 
-    background: "#F2F2F7",
-    foreground: "#1C1C1E",
+    background: "#F0EDE8",
+    foreground: "#2C2A28",
 
-    card: "#FFFFFF",
-    cardForeground: "#1C1C1E",
+    card: "#FAFAF8",
+    cardForeground: "#2C2A28",
 
-    primary: "#007AFF",
+    primary: "#8B9EA8",
     primaryForeground: "#FFFFFF",
 
-    secondary: "#E5E5EA",
-    secondaryForeground: "#1C1C1E",
+    secondary: "#E8E4DE",
+    secondaryForeground: "#2C2A28",
 
-    muted: "#F2F2F7",
-    mutedForeground: "#8E8E93",
+    muted: "#EAE7E2",
+    mutedForeground: "#9A9590",
 
-    accent: "#007AFF",
+    accent: "#B8A898",
     accentForeground: "#FFFFFF",
 
-    destructive: "#FF3B30",
+    destructive: "#B88A8A",
     destructiveForeground: "#FFFFFF",
 
-    success: "#34C759",
+    success: "#8FAF96",
     successForeground: "#FFFFFF",
 
-    warning: "#FF9500",
+    warning: "#C4A882",
     warningForeground: "#FFFFFF",
 
-    border: "#E5E5EA",
-    input: "#FFFFFF",
+    border: "#E2DED8",
+    input: "#FAFAF8",
 
-    separator: "#C6C6C8",
+    separator: "#D8D4CE",
 
-    today: "#FF3B30",
-    selectedDay: "#007AFF",
+    today: "#B88A8A",
+    selectedDay: "#8B9EA8",
   },
 
   dark: {
-    text: "#FFFFFF",
-    tint: "#0A84FF",
+    text: "#EDE9E4",
+    tint: "#8B9EA8",
 
-    background: "#000000",
-    foreground: "#FFFFFF",
+    background: "#1E1C1A",
+    foreground: "#EDE9E4",
 
-    card: "#1C1C1E",
-    cardForeground: "#FFFFFF",
+    card: "#28261E",
+    cardForeground: "#EDE9E4",
 
-    primary: "#0A84FF",
+    primary: "#8B9EA8",
     primaryForeground: "#FFFFFF",
 
-    secondary: "#2C2C2E",
-    secondaryForeground: "#FFFFFF",
+    secondary: "#38342E",
+    secondaryForeground: "#EDE9E4",
 
-    muted: "#1C1C1E",
-    mutedForeground: "#8E8E93",
+    muted: "#2E2A26",
+    mutedForeground: "#7A7672",
 
-    accent: "#0A84FF",
+    accent: "#B8A898",
     accentForeground: "#FFFFFF",
 
-    destructive: "#FF453A",
+    destructive: "#B88A8A",
     destructiveForeground: "#FFFFFF",
 
-    success: "#30D158",
+    success: "#8FAF96",
     successForeground: "#FFFFFF",
 
-    warning: "#FF9F0A",
+    warning: "#C4A882",
     warningForeground: "#FFFFFF",
 
-    border: "#38383A",
-    input: "#1C1C1E",
+    border: "#3C3830",
+    input: "#28261E",
 
-    separator: "#38383A",
+    separator: "#3C3830",
 
-    today: "#FF453A",
-    selectedDay: "#0A84FF",
+    today: "#B88A8A",
+    selectedDay: "#8B9EA8",
   },
 
-  radius: 12,
+  radius: 14,
 
   subject: {
-    math: "#BFD7FF",
-    english: "#D1F2D3",
-    history: "#FFF3C4",
-    science: "#F2D9FF",
-    art: "#FFD9D9",
-    pe: "#D9F2F2",
-    music: "#FFE8CC",
-    cs: "#CCE5FF",
-    other: "#E8E8E8",
+    数学: "#C4CDD6",
+    英语: "#C8D4C4",
+    历史: "#D8CCBC",
+    理科: "#D0C4D4",
+    艺术: "#D4C4C4",
+    体育: "#C8D0C8",
+    音乐: "#D8CCBC",
+    计算机: "#C4CCCC",
+    其他: "#D0CCCA",
   },
 
   subjectText: {
-    math: "#1A4DB3",
-    english: "#1A6B28",
-    history: "#7A5C00",
-    science: "#6B1A9E",
-    art: "#9E1A1A",
-    pe: "#1A6B6B",
-    music: "#9E5C00",
-    cs: "#004DA3",
-    other: "#555555",
+    数学: "#4A6070",
+    英语: "#3A5A42",
+    历史: "#6A5040",
+    理科: "#5A4A6A",
+    艺术: "#6A4444",
+    体育: "#3A5A44",
+    音乐: "#6A5040",
+    计算机: "#3A5060",
+    其他: "#5A5450",
   },
 };
 

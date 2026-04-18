@@ -18,7 +18,7 @@ import { SUBJECT_COLORS, SUBJECT_TEXT_COLORS, TimeBlock } from "@/context/TasksC
 import { useColors } from "@/hooks/useColors";
 
 const SUBJECTS = Object.keys(SUBJECT_COLORS);
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 8);
 const DURATIONS = [1, 1.5, 2, 2.5, 3];
 
@@ -45,7 +45,7 @@ export function AddTimeBlockModal({
   const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("other");
+  const [subject, setSubject] = useState("其他");
   const [dayOfWeek, setDayOfWeek] = useState(defaultDay);
   const [startHour, setStartHour] = useState(defaultHour);
   const [durationHours, setDurationHours] = useState(1);
@@ -59,7 +59,7 @@ export function AddTimeBlockModal({
       setDurationHours(editBlock.durationHours);
     } else {
       setTitle("");
-      setSubject("other");
+      setSubject("其他");
       setDayOfWeek(defaultDay);
       setStartHour(defaultHour);
       setDurationHours(1);
@@ -75,8 +75,8 @@ export function AddTimeBlockModal({
       dayOfWeek,
       startHour,
       durationHours,
-      color: SUBJECT_COLORS[subject] ?? SUBJECT_COLORS.other,
-      textColor: SUBJECT_TEXT_COLORS[subject] ?? SUBJECT_TEXT_COLORS.other,
+      color: SUBJECT_COLORS[subject] ?? SUBJECT_COLORS["其他"],
+      textColor: SUBJECT_TEXT_COLORS[subject] ?? SUBJECT_TEXT_COLORS["其他"],
     });
     onClose();
   };
@@ -104,7 +104,7 @@ export function AddTimeBlockModal({
 
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-              {editBlock ? "Edit Time Block" : "New Time Block"}
+              {editBlock ? "编辑时间块" : "添加时间块"}
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Feather name="x" size={22} color={colors.mutedForeground} />
@@ -121,7 +121,7 @@ export function AddTimeBlockModal({
                 styles.input,
                 { backgroundColor: colors.muted, color: colors.foreground },
               ]}
-              placeholder="e.g. Calculus, Study session..."
+              placeholder="如：高等数学、自习时间..."
               placeholderTextColor={colors.mutedForeground}
               value={title}
               onChangeText={setTitle}
@@ -129,7 +129,7 @@ export function AddTimeBlockModal({
             />
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Subject Color</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>学科颜色</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <View style={styles.row}>
                   {SUBJECTS.map((s) => {
@@ -141,7 +141,7 @@ export function AddTimeBlockModal({
                         key={s}
                         style={[
                           styles.subjectChip,
-                          { backgroundColor: bg, borderWidth: selected ? 2 : 0, borderColor: tc },
+                          { backgroundColor: bg, borderWidth: selected ? 1.5 : 0, borderColor: tc },
                         ]}
                         onPress={() => setSubject(s)}
                       >
@@ -154,7 +154,7 @@ export function AddTimeBlockModal({
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Day</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>星期</Text>
               <View style={[styles.row, { marginTop: 8, flexWrap: "wrap" }]}>
                 {DAYS.map((d, i) => (
                   <TouchableOpacity
@@ -182,7 +182,7 @@ export function AddTimeBlockModal({
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Start Time</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>开始时间</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <View style={styles.row}>
                   {HOURS.map((h) => (
@@ -212,7 +212,7 @@ export function AddTimeBlockModal({
             </View>
 
             <View>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Duration</Text>
+              <Text style={[styles.label, { color: colors.mutedForeground }]}>时长</Text>
               <View style={[styles.row, { marginTop: 8 }]}>
                 {DURATIONS.map((d) => (
                   <TouchableOpacity
@@ -232,7 +232,7 @@ export function AddTimeBlockModal({
                         fontSize: 12,
                       }}
                     >
-                      {d}h
+                      {d}小时
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -249,7 +249,7 @@ export function AddTimeBlockModal({
                 }}
               >
                 <Text style={{ color: colors.destructive, fontWeight: "600", fontSize: 15 }}>
-                  Delete Block
+                  删除时间块
                 </Text>
               </TouchableOpacity>
             )}
@@ -262,8 +262,8 @@ export function AddTimeBlockModal({
               onPress={handleSave}
               disabled={!title.trim()}
             >
-              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
-                {editBlock ? "Save Changes" : "Add Block"}
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.3 }}>
+                {editBlock ? "保存修改" : "添加时间块"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -274,11 +274,11 @@ export function AddTimeBlockModal({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
+  overlay: { flex: 1, backgroundColor: "rgba(44,42,40,0.3)" },
   keyboardView: { justifyContent: "flex-end" },
   sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     paddingTop: 12,
     maxHeight: "92%",
   },
@@ -296,15 +296,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
   },
-  headerTitle: { fontSize: 18, fontWeight: "700" },
-  input: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, fontSize: 15 },
-  label: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
+  headerTitle: { fontSize: 18, fontWeight: "700", letterSpacing: 0.2 },
+  input: { paddingHorizontal: 14, paddingVertical: 13, borderRadius: 12, fontSize: 15 },
+  label: { fontSize: 11, fontWeight: "600", letterSpacing: 0.8 },
   row: { flexDirection: "row", gap: 8 },
-  subjectChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  subjectChipText: { fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
-  dayBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
+  subjectChip: { paddingHorizontal: 13, paddingVertical: 7, borderRadius: 20 },
+  subjectChipText: { fontSize: 13, fontWeight: "600" },
+  dayBtn: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   hourBtn: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8 },
-  durationBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
+  durationBtn: { flex: 1, paddingVertical: 11, borderRadius: 12, alignItems: "center" },
   deleteBtn: {
     paddingVertical: 14,
     borderRadius: 14,
