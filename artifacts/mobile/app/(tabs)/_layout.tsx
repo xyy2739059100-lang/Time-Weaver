@@ -28,6 +28,42 @@ function NativeTabLayout() {
   );
 }
 
+function FrostedBackground({ colors, isDark }: { colors: any; isDark: boolean }) {
+  const isIOS = Platform.OS === "ios";
+  const isWeb = Platform.OS === "web";
+
+  if (isIOS) {
+    return (
+      <BlurView
+        intensity={90}
+        tint={isDark ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
+    );
+  }
+
+  if (isWeb) {
+    return (
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: isDark
+              ? "rgba(28,26,24,0.82)"
+              : "rgba(250,250,248,0.82)",
+          } as any,
+        ]}
+      />
+    );
+  }
+
+  return (
+    <View
+      style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]}
+    />
+  );
+}
+
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
@@ -43,31 +79,23 @@ function ClassicTabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.card,
+          backgroundColor: "transparent",
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
         },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={90}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : isWeb ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.card },
-              ]}
-            />
-          ) : null,
+        tabBarBackground: () => (
+          <FrostedBackground colors={colors} isDark={isDark} />
+        ),
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600" as const,
-          letterSpacing: 0.2,
+          letterSpacing: 0.3,
+          marginBottom: isWeb ? 8 : 0,
+        },
+        tabBarItemStyle: {
+          paddingVertical: isWeb ? 8 : 0,
         },
       }}
     >
@@ -75,9 +103,13 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "今天",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ color, focused }) =>
             isIOS ? (
-              <SymbolView name="house" tintColor={color} size={23} />
+              <SymbolView
+                name={focused ? "house.fill" : "house"}
+                tintColor={color}
+                size={23}
+              />
             ) : (
               <Feather name="home" size={21} color={color} />
             ),
@@ -87,9 +119,13 @@ function ClassicTabLayout() {
         name="calendar"
         options={{
           title: "日历",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ color, focused }) =>
             isIOS ? (
-              <SymbolView name="calendar" tintColor={color} size={23} />
+              <SymbolView
+                name={focused ? "calendar.badge.clock" : "calendar"}
+                tintColor={color}
+                size={23}
+              />
             ) : (
               <Feather name="calendar" size={21} color={color} />
             ),
@@ -99,9 +135,13 @@ function ClassicTabLayout() {
         name="schedule"
         options={{
           title: "课程表",
-          tabBarIcon: ({ color }) =>
+          tabBarIcon: ({ color, focused }) =>
             isIOS ? (
-              <SymbolView name="tablecells" tintColor={color} size={23} />
+              <SymbolView
+                name={focused ? "tablecells.fill" : "tablecells"}
+                tintColor={color}
+                size={23}
+              />
             ) : (
               <Feather name="grid" size={21} color={color} />
             ),

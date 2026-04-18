@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -27,49 +27,69 @@ const PRIORITY_COLORS: Record<string, string> = {
   低: "#8FAF96",
 };
 
+const ACTION_WIDTH = 76;
+const REVEAL_THRESHOLD = 60;
+const FULL_REVEAL = ACTION_WIDTH * 2;
+
 export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
   const colors = useColors();
   const translateX = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
-  const actionOpacity = useRef(new Animated.Value(0)).current;
+  const cardOpacity = useRef(new Animated.Value(1)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const [isRevealed, setIsRevealed] = useState(false);
+  const isRevealedRef = useRef(false);
+
+  const snapTo = (value: number, cb?: () => void) => {
+    Animated.spring(translateX, {
+      toValue: value,
+      useNativeDriver: true,
+      bounciness: value === 0 ? 6 : 0,
+      speed: 18,
+    }).start(cb);
+  };
+
+  const collapse = () => {
+    snapTo(0);
+    setIsRevealed(false);
+    isRevealedRef.current = false;
+  };
+
+  const triggerComplete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Animated.parallel([
+      Animated.timing(translateX, { toValue: -400, duration: 220, useNativeDriver: true }),
+      Animated.timing(cardOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start(() => onComplete());
+  };
+
+  const triggerDelete = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Animated.parallel([
+      Animated.timing(translateX, { toValue: -400, duration: 220, useNativeDriver: true }),
+      Animated.timing(cardOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start(() => onDelete());
+  };
 
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         Math.abs(g.dx) > 6 && Math.abs(g.dy) < 20,
       onPanResponderMove: (_, g) => {
-        if (g.dx < 0) {
-          translateX.setValue(Math.max(g.dx, -120));
-          actionOpacity.setValue(Math.min(Math.abs(g.dx) / 80, 1));
-        }
+        const base = isRevealedRef.current ? -FULL_REVEAL : 0;
+        const raw = base + g.dx;
+        if (raw < 0) translateX.setValue(Math.max(raw, -FULL_REVEAL - 10));
+        if (raw > 0 && isRevealedRef.current) translateX.setValue(Math.min(raw, 4));
       },
       onPanResponderRelease: (_, g) => {
-        if (g.dx < -80) {
-          Animated.parallel([
-            Animated.timing(translateX, {
-              toValue: -300,
-              duration: 250,
-              useNativeDriver: true,
-            }),
-            Animated.timing(opacity, {
-              toValue: 0,
-              duration: 250,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            onComplete();
-          });
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        const base = isRevealedRef.current ? -FULL_REVEAL : 0;
+        const raw = base + g.dx;
+        if (raw < -REVEAL_THRESHOLD) {
+          snapTo(-FULL_REVEAL);
+          setIsRevealed(true);
+          isRevealedRef.current = true;
+          if (!isRevealedRef.current) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         } else {
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-          Animated.timing(actionOpacity, {
-            toValue: 0,
-            duration: 150,
-            useNativeDriver: true,
-          }).start();
+          collapse();
         }
       },
     })
@@ -78,35 +98,74 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
   const bgColor = SUBJECT_COLORS[task.subject] ?? SUBJECT_COLORS["其他"];
   const textColor = SUBJECT_TEXT_COLORS[task.subject] ?? SUBJECT_TEXT_COLORS["其他"];
 
+  const handlePressIn = () => {
+    if (isRevealedRef.current) return;
+    Animated.spring(pressScale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 0,
+    }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(pressScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 10,
+    }).start();
+  };
+
   return (
     <View style={styles.wrapper}>
-      <Animated.View
-        style={[
-          styles.actionBg,
-          { opacity: actionOpacity, backgroundColor: colors.success },
-        ]}
-      >
-        <Feather name="check" size={20} color="#fff" />
-        <Text style={styles.actionLabel}>完成</Text>
-      </Animated.View>
+      {/* Right-side action buttons (revealed on left swipe) */}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: colors.success }]}
+          onPress={triggerComplete}
+        >
+          <Feather name="check" size={18} color="#fff" />
+          <Text style={styles.actionLabel}>完成</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: colors.destructive }]}
+          onPress={triggerDelete}
+        >
+          <Feather name="trash-2" size={18} color="#fff" />
+          <Text style={styles.actionLabel}>删除</Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* The card itself */}
       <Animated.View
         style={[
-          styles.card,
+          styles.cardOuter,
           {
-            backgroundColor: colors.card,
-            borderRadius: colors.radius,
-            transform: [{ translateX }],
-            opacity,
-            shadowColor: "#2C2A28",
+            transform: [{ translateX }, { scale: pressScale }],
+            opacity: cardOpacity,
           },
         ]}
         {...panResponder.panHandlers}
       >
         <TouchableOpacity
-          style={styles.inner}
-          onPress={onPress}
-          activeOpacity={0.8}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.card,
+              borderRadius: 14,
+              shadowColor: "#2C2A28",
+            },
+          ]}
+          onPress={() => {
+            if (isRevealedRef.current) {
+              collapse();
+              return;
+            }
+            onPress();
+          }}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
         >
           <TouchableOpacity
             style={[
@@ -117,9 +176,11 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
               },
             ]}
             onPress={() => {
+              if (isRevealedRef.current) { collapse(); return; }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onComplete();
             }}
+            hitSlop={6}
           >
             {task.completed && (
               <Feather name="check" size={11} color="#fff" />
@@ -154,12 +215,22 @@ export function TaskCard({ task, onComplete, onPress, onDelete }: Props) {
               <Text style={[styles.priorityLabel, { color: colors.mutedForeground }]}>
                 {task.priority}优先
               </Text>
+              {task.date && (
+                <>
+                  <Text style={[styles.priorityLabel, { color: colors.border }]}>·</Text>
+                  <Text style={[styles.priorityLabel, { color: colors.mutedForeground }]}>
+                    {task.date.slice(5).replace("-", "/")}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
 
-          <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={8}>
-            <Feather name="trash-2" size={15} color={colors.mutedForeground} />
-          </TouchableOpacity>
+          <View
+            style={[styles.swipeHint, { opacity: isRevealed ? 0 : 0.25 }]}
+          >
+            <Feather name="chevrons-left" size={14} color={colors.mutedForeground} />
+          </View>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -170,36 +241,40 @@ const styles = StyleSheet.create({
   wrapper: {
     position: "relative",
     marginBottom: 8,
-  },
-  actionBg: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+    overflow: Platform.OS === "web" ? "hidden" : "visible",
     borderRadius: 14,
+  },
+  actionsContainer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: "row",
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  actionBtn: {
+    width: ACTION_WIDTH,
     alignItems: "center",
-    paddingLeft: 18,
-    gap: 6,
+    justifyContent: "center",
+    gap: 3,
   },
   actionLabel: {
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
+    fontSize: 11,
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
+  cardOuter: {},
   card: {
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  inner: {
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
     gap: 12,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   check: {
     width: 22,
@@ -209,38 +284,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  content: {
-    flex: 1,
-    gap: 5,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: "500",
-    letterSpacing: 0.1,
-  },
-  meta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  subjectTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  subjectText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  priorityDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  priorityLabel: {
-    fontSize: 11,
-  },
-  deleteBtn: {
-    padding: 4,
-  },
+  content: { flex: 1, gap: 5 },
+  title: { fontSize: 15, fontWeight: "500", letterSpacing: 0.1 },
+  meta: { flexDirection: "row", alignItems: "center", gap: 6 },
+  subjectTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  subjectText: { fontSize: 11, fontWeight: "600" },
+  priorityDot: { width: 5, height: 5, borderRadius: 2.5 },
+  priorityLabel: { fontSize: 11 },
+  swipeHint: { paddingLeft: 4 },
 });

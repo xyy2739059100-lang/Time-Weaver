@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AddTimeBlockModal } from "@/components/AddTimeBlockModal";
+import { ScreenEnter } from "@/components/ScreenEnter";
 import { TimeBlock, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -136,6 +137,7 @@ export default function ScheduleScreen() {
   );
 
   return (
+    <ScreenEnter>
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top bar */}
       <View
@@ -362,6 +364,7 @@ export default function ScheduleScreen() {
         }}
       />
     </View>
+    </ScreenEnter>
   );
 }
 

@@ -1,18 +1,23 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AddTaskModal } from "@/components/AddTaskModal";
 import { TaskCard } from "@/components/TaskCard";
+import { ScreenEnter } from "@/components/ScreenEnter";
+import { DashboardSkeleton } from "@/components/SkeletonLoader";
 import { Task, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -22,9 +27,17 @@ const MONTH_NAMES = [
   "七月", "八月", "九月", "十月", "十一月", "十二月",
 ];
 
+const PRIORITY_COLORS: Record<string, string> = {
+  高: "#B88A8A",
+  中: "#C4A882",
+  低: "#8FAF96",
+};
+
 function toDateStr(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function CalendarScreen() {
   const colors = useColors();
@@ -39,17 +52,25 @@ export default function CalendarScreen() {
   );
   const [showAdd, setShowAdd] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [loading] = useState(false);
+
+  const prevSelectedDate = useRef(selectedDate);
+
+  // Animated values for task list slide
+  const listTranslateX = useRef(new Animated.Value(0)).current;
+  const listOpacity = useRef(new Animated.Value(1)).current;
 
   const todayStr = toDateStr(now.getFullYear(), now.getMonth(), now.getDate());
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
 
-  const taskDates = useMemo(() => {
-    const map: Record<string, number> = {};
+  const tasksByDate = useMemo(() => {
+    const map: Record<string, Task[]> = {};
     tasks.forEach((t) => {
       if (!t.completed) {
-        map[t.date] = (map[t.date] ?? 0) + 1;
+        if (!map[t.date]) map[t.date] = [];
+        map[t.date].push(t);
       }
     });
     return map;
@@ -63,22 +84,42 @@ export default function CalendarScreen() {
     [tasks, selectedDate]
   );
 
-  const goToPrevMonth = () => {
-    if (month === 0) {
-      setMonth(11);
-      setYear(year - 1);
-    } else {
-      setMonth(month - 1);
-    }
+  const animateListChange = (direction: "left" | "right") => {
+    const fromX = direction === "left" ? SCREEN_WIDTH * 0.3 : -SCREEN_WIDTH * 0.3;
+    listTranslateX.setValue(fromX);
+    listOpacity.setValue(0);
+    Animated.parallel([
+      Animated.timing(listTranslateX, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(listOpacity, {
+        toValue: 1,
+        duration: 280,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
+  const handleSelectDate = (dateStr: string) => {
+    if (dateStr === selectedDate) return;
+    Haptics.selectionAsync();
+    const direction = dateStr > prevSelectedDate.current ? "left" : "right";
+    prevSelectedDate.current = dateStr;
+    setSelectedDate(dateStr);
+    animateListChange(direction);
+  };
+
+  const goToPrevMonth = () => {
+    if (month === 0) { setMonth(11); setYear(year - 1); }
+    else setMonth(month - 1);
+  };
   const goToNextMonth = () => {
-    if (month === 11) {
-      setMonth(0);
-      setYear(year + 1);
-    } else {
-      setMonth(month + 1);
-    }
+    if (month === 11) { setMonth(0); setYear(year + 1); }
+    else setMonth(month + 1);
   };
 
   const topPaddingWeb = Platform.OS === "web" ? 67 : insets.top;
@@ -97,229 +138,281 @@ export default function CalendarScreen() {
   })();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 100,
-        }}
-      >
-        {/* Calendar card */}
-        <View
-          style={[
-            styles.calendarCard,
-            {
-              paddingTop: topPaddingWeb + 20,
-              backgroundColor: colors.card,
-            },
-          ]}
+    <ScreenEnter>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: Platform.OS === "web" ? 100 : insets.bottom + 100,
+          }}
         >
-          {/* Month nav */}
-          <View style={styles.monthNav}>
-            <TouchableOpacity onPress={goToPrevMonth} hitSlop={14}>
-              <Feather name="chevron-left" size={20} color={colors.foreground} />
-            </TouchableOpacity>
-            <Text style={[styles.monthTitle, { color: colors.foreground }]}>
-              {year}年 {MONTH_NAMES[month]}
-            </Text>
-            <TouchableOpacity onPress={goToNextMonth} hitSlop={14}>
-              <Feather name="chevron-right" size={20} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Day labels */}
-          <View style={styles.dayLabels}>
-            {DAY_NAMES.map((d) => (
-              <Text
-                key={d}
-                style={[styles.dayLabel, { color: colors.mutedForeground }]}
+          {/* Calendar card */}
+          <View
+            style={[
+              styles.calendarCard,
+              {
+                paddingTop: topPaddingWeb + 14,
+                backgroundColor: colors.card,
+              },
+            ]}
+          >
+            {/* Month nav */}
+            <View style={styles.monthNav}>
+              <TouchableOpacity
+                onPress={goToPrevMonth}
+                hitSlop={14}
+                style={styles.navBtn}
               >
-                {d}
-              </Text>
-            ))}
-          </View>
+                <Feather name="chevron-left" size={20} color={colors.foreground} />
+              </TouchableOpacity>
+              <View style={{ alignItems: "center", gap: 2 }}>
+                <Text style={[styles.monthTitle, { color: colors.foreground }]}>
+                  {MONTH_NAMES[month]}
+                </Text>
+                <Text style={[styles.yearLabel, { color: colors.mutedForeground }]}>
+                  {year}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={goToNextMonth}
+                hitSlop={14}
+                style={styles.navBtn}
+              >
+                <Feather name="chevron-right" size={20} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
 
-          {/* Grid */}
-          <View style={styles.grid}>
-            {calendarCells.map((day, idx) => {
-              if (!day) return <View key={`e-${idx}`} style={styles.cell} />;
-              const dateStr = toDateStr(year, month, day);
-              const isToday = dateStr === todayStr;
-              const isSelected = dateStr === selectedDate;
-              const hasTasks = !!taskDates[dateStr];
-
-              return (
-                <TouchableOpacity
-                  key={dateStr}
-                  style={styles.cell}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setSelectedDate(dateStr);
-                  }}
+            {/* Day labels */}
+            <View style={styles.dayLabels}>
+              {DAY_NAMES.map((d) => (
+                <Text
+                  key={d}
+                  style={[styles.dayLabel, { color: colors.mutedForeground }]}
                 >
-                  <View
-                    style={[
-                      styles.dayCircle,
-                      isSelected && { backgroundColor: colors.selectedDay },
-                      isToday && !isSelected && {
-                        backgroundColor: colors.today,
-                      },
-                    ]}
+                  {d}
+                </Text>
+              ))}
+            </View>
+
+            {/* Grid */}
+            <View style={styles.grid}>
+              {calendarCells.map((day, idx) => {
+                if (!day) return <View key={`e-${idx}`} style={styles.cell} />;
+                const dateStr = toDateStr(year, month, day);
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === selectedDate;
+                const dayTasks = tasksByDate[dateStr] ?? [];
+                const hasTasks = dayTasks.length > 0;
+
+                // Dot colors based on top priority
+                const topPriority = dayTasks[0]?.priority;
+                const dotColor = topPriority
+                  ? PRIORITY_COLORS[topPriority]
+                  : colors.primary;
+
+                return (
+                  <TouchableOpacity
+                    key={dateStr}
+                    style={styles.cell}
+                    onPress={() => handleSelectDate(dateStr)}
+                    activeOpacity={0.7}
                   >
-                    <Text
+                    <Animated.View
                       style={[
-                        styles.dayNum,
-                        { color: colors.foreground },
-                        (isSelected || isToday) && {
-                          color: "#fff",
-                          fontWeight: "700",
-                        },
+                        styles.dayCircle,
+                        isSelected && { backgroundColor: colors.primary },
+                        isToday && !isSelected && { backgroundColor: colors.today },
                       ]}
                     >
-                      {day}
-                    </Text>
-                  </View>
-                  {hasTasks && !isSelected && (
-                    <View
-                      style={[
-                        styles.eventDot,
-                        {
-                          backgroundColor: isToday
-                            ? "#fff"
-                            : colors.primary,
-                        },
-                      ]}
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Task list */}
-        <View style={[styles.listSection, { paddingHorizontal: 22 }]}>
-          <View style={styles.listHeader}>
-            <Text style={[styles.listTitle, { color: colors.foreground }]}>
-              {selectedDateLabel}
-            </Text>
-            <TouchableOpacity
-              style={[styles.addBtn, { backgroundColor: colors.primary }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowAdd(true);
-              }}
-            >
-              <Feather name="plus" size={15} color="#fff" />
-              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>
-                添加
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {selectedTasks.length === 0 ? (
-            <View
-              style={[styles.emptyState, { backgroundColor: colors.card }]}
-            >
-              <Feather name="coffee" size={26} color={colors.mutedForeground} />
-              <Text
-                style={[styles.emptyTitle, { color: colors.mutedForeground }]}
-              >
-                这天没有安排
-              </Text>
-              <Text
-                style={[styles.emptyHint, { color: colors.mutedForeground }]}
-              >
-                享受轻松时光吧
-              </Text>
+                      <Text
+                        style={[
+                          styles.dayNum,
+                          { color: colors.foreground },
+                          (isSelected || isToday) && {
+                            color: "#fff",
+                            fontWeight: "700",
+                          },
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </Animated.View>
+                    {hasTasks && !isSelected && (
+                      <View
+                        style={[
+                          styles.eventDot,
+                          {
+                            backgroundColor: isToday ? "#fff" : dotColor,
+                          },
+                        ]}
+                      />
+                    )}
+                    {hasTasks && isSelected && (
+                      <View
+                        style={[styles.eventDot, { backgroundColor: "#ffffff88" }]}
+                      />
+                    )}
+                    {dayTasks.length > 1 && !isSelected && (
+                      <View
+                        style={[
+                          styles.eventDotExtra,
+                          { backgroundColor: isToday ? "#ffffff88" : colors.border },
+                        ]}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          ) : (
-            selectedTasks.map((t) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                onComplete={() => toggleTask(t.id)}
-                onPress={() => setEditingTask(t)}
-                onDelete={() => deleteTask(t.id)}
-              />
-            ))
-          )}
-        </View>
-      </ScrollView>
+          </View>
 
-      <AddTaskModal
-        visible={showAdd}
-        onClose={() => setShowAdd(false)}
-        onSave={(t) => addTask(t)}
-        defaultDate={selectedDate}
-      />
-      <AddTaskModal
-        visible={!!editingTask}
-        editTask={editingTask}
-        onClose={() => setEditingTask(undefined)}
-        onSave={(t) => {
-          if (editingTask) editTask(editingTask.id, t);
-        }}
-      />
-    </View>
+          {/* Task list with slide animation */}
+          <Animated.View
+            style={[
+              styles.listSection,
+              {
+                transform: [{ translateX: listTranslateX }],
+                opacity: listOpacity,
+              },
+            ]}
+          >
+            <View style={styles.listHeader}>
+              <View>
+                <Text style={[styles.listTitle, { color: colors.foreground }]}>
+                  {selectedDateLabel}
+                </Text>
+                <Text style={[styles.listCount, { color: colors.mutedForeground }]}>
+                  {selectedTasks.length > 0
+                    ? `${selectedTasks.filter((t) => !t.completed).length} 项待完成`
+                    : "暂无安排"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.addBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowAdd(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Feather name="plus" size={15} color="#fff" />
+                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>
+                  添加
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {loading ? (
+              <DashboardSkeleton />
+            ) : selectedTasks.length === 0 ? (
+              <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
+                <Feather name="coffee" size={28} color={colors.mutedForeground} />
+                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
+                  这天没有安排
+                </Text>
+                <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
+                  享受轻松时光吧
+                </Text>
+              </View>
+            ) : (
+              selectedTasks.map((t) => (
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  onComplete={() => toggleTask(t.id)}
+                  onPress={() => setEditingTask(t)}
+                  onDelete={() => deleteTask(t.id)}
+                />
+              ))
+            )}
+          </Animated.View>
+        </ScrollView>
+
+        <AddTaskModal
+          visible={showAdd}
+          onClose={() => setShowAdd(false)}
+          onSave={(t) => addTask(t)}
+          defaultDate={selectedDate}
+        />
+        <AddTaskModal
+          visible={!!editingTask}
+          editTask={editingTask}
+          onClose={() => setEditingTask(undefined)}
+          onSave={(t) => {
+            if (editingTask) editTask(editingTask.id, t);
+          }}
+        />
+      </View>
+    </ScreenEnter>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   calendarCard: {
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     shadowColor: "#2C2A28",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   monthNav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
-    paddingHorizontal: 4,
+    marginBottom: 16,
+    paddingHorizontal: 2,
   },
-  monthTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
-  dayLabels: { flexDirection: "row", marginBottom: 4 },
-  dayLabel: { flex: 1, textAlign: "center", fontSize: 12, fontWeight: "500" },
+  navBtn: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 19,
+  },
+  monthTitle: { fontSize: 20, fontWeight: "800", letterSpacing: 0.2 },
+  yearLabel: { fontSize: 12, fontWeight: "500" },
+  dayLabels: { flexDirection: "row", marginBottom: 2 },
+  dayLabel: { flex: 1, textAlign: "center", fontSize: 11, fontWeight: "500" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
   cell: {
     width: `${100 / 7}%` as `${number}%`,
     aspectRatio: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2,
+    paddingVertical: 3,
+    gap: 2,
   },
   dayCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
-  dayNum: { fontSize: 14 },
-  eventDot: { width: 4, height: 4, borderRadius: 2, marginTop: 1 },
-  listSection: { paddingTop: 22, gap: 0 },
+  dayNum: { fontSize: 14, fontWeight: "400" },
+  eventDot: { width: 4, height: 4, borderRadius: 2 },
+  eventDotExtra: { width: 3, height: 3, borderRadius: 1.5, marginTop: -2 },
+  listSection: { paddingTop: 24, paddingHorizontal: 22, gap: 0 },
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  listTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
+  listTitle: { fontSize: 18, fontWeight: "700", letterSpacing: 0.2 },
+  listCount: { fontSize: 12, marginTop: 2 },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 9,
+    borderRadius: 22,
   },
-  emptyState: { borderRadius: 16, padding: 30, alignItems: "center", gap: 8 },
+  emptyState: { borderRadius: 16, padding: 34, alignItems: "center", gap: 8 },
   emptyTitle: { fontSize: 15, fontWeight: "600" },
   emptyHint: { fontSize: 12 },
 });
