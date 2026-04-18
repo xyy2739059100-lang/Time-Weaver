@@ -1,11 +1,15 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -15,6 +19,18 @@ import { AddTaskModal } from "@/components/AddTaskModal";
 import { TaskCard } from "@/components/TaskCard";
 import { Task, useTasks } from "@/context/TasksContext";
 import { useColors } from "@/hooks/useColors";
+
+const GREETING_KEY = "@timeflow_greeting";
+
+const DEFAULT_GREETINGS = [
+  "今天的努力，明天的收获。",
+  "好好努力，前途无量。",
+  "专注当下，成就未来。",
+  "每一步都算数。",
+  "你比你想象的更强。",
+  "静下心来，慢慢来。",
+  "一分耕耘，一分收获。",
+];
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
@@ -39,16 +55,6 @@ function getMonthRange() {
   return { start: toStr(start), end: toStr(end) };
 }
 
-const GREETINGS = [
-  "好好努力，前途无量。",
-  "今天也要加油哦。",
-  "专注当下，成就未来。",
-  "每一步都算数。",
-  "你比你想象的更强。",
-  "静下心来，慢慢来。",
-  "今天的努力，明天的收获。",
-];
-
 const WEEK_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 const MONTH_NAMES = [
   "1月", "2月", "3月", "4月", "5月", "6月",
@@ -62,11 +68,44 @@ export default function DashboardScreen() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
+  const [greeting, setGreeting] = useState<string | null>(null);
+  const [editingGreeting, setEditingGreeting] = useState(false);
+  const [draftGreeting, setDraftGreeting] = useState("");
+
+  useEffect(() => {
+    AsyncStorage.getItem(GREETING_KEY).then((v) => {
+      if (v) setGreeting(v);
+    });
+  }, []);
+
+  const displayGreeting =
+    greeting ?? DEFAULT_GREETINGS[new Date().getDay() % DEFAULT_GREETINGS.length];
+
+  const openGreetingEdit = () => {
+    setDraftGreeting(displayGreeting);
+    setEditingGreeting(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const saveGreeting = async () => {
+    const val = draftGreeting.trim();
+    if (val) {
+      setGreeting(val);
+      await AsyncStorage.setItem(GREETING_KEY, val);
+    }
+    setEditingGreeting(false);
+  };
+
+  const resetGreeting = async () => {
+    setGreeting(null);
+    await AsyncStorage.removeItem(GREETING_KEY);
+    setEditingGreeting(false);
+  };
+
   const today = todayStr();
   const now = new Date();
   const dayName = WEEK_DAYS[now.getDay()];
   const dateLabel = `${now.getFullYear()}年${MONTH_NAMES[now.getMonth()]}${now.getDate()}日`;
-  const greeting = GREETINGS[now.getDay() % GREETINGS.length];
 
   const week = getWeekRange();
   const month = getMonthRange();
@@ -129,13 +168,30 @@ export default function DashboardScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, gap: 6 }}>
             <Text style={[styles.dayName, { color: colors.mutedForeground }]}>
               {dayName}　{dateLabel}
             </Text>
-            <Text style={[styles.greeting, { color: colors.foreground }]}>
-              {greeting}
-            </Text>
+            <TouchableOpacity
+              style={styles.greetingRow}
+              onPress={openGreetingEdit}
+              activeOpacity={0.75}
+            >
+              <Text
+                style={[styles.greeting, { color: colors.foreground }]}
+                numberOfLines={2}
+              >
+                {displayGreeting}
+              </Text>
+              <View
+                style={[
+                  styles.editGreetingBtn,
+                  { backgroundColor: colors.muted },
+                ]}
+              >
+                <Feather name="edit-2" size={12} color={colors.mutedForeground} />
+              </View>
+            </TouchableOpacity>
           </View>
           <View
             style={[
@@ -162,7 +218,9 @@ export default function DashboardScreen() {
                 styles.progressPct,
                 {
                   color:
-                    completionRate === 100 ? colors.success : colors.mutedForeground,
+                    completionRate === 100
+                      ? colors.success
+                      : colors.mutedForeground,
                 },
               ]}
             >
@@ -174,12 +232,8 @@ export default function DashboardScreen() {
         {/* Today */}
         <View>
           <View style={styles.sectionRow}>
-            <View
-              style={[styles.sectionDot, { backgroundColor: colors.today }]}
-            />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              今天
-            </Text>
+            <View style={[styles.sectionDot, { backgroundColor: colors.today }]} />
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>今天</Text>
             <Text style={[styles.sectionBadge, { color: colors.mutedForeground }]}>
               {todayTasks.length > 0 ? `还剩 ${todayTasks.length} 项` : "全部完成"}
             </Text>
@@ -218,12 +272,8 @@ export default function DashboardScreen() {
         {/* This Week */}
         <View>
           <View style={styles.sectionRow}>
-            <View
-              style={[styles.sectionDot, { backgroundColor: colors.primary }]}
-            />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              本周待办
-            </Text>
+            <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>本周待办</Text>
             <Text style={[styles.sectionBadge, { color: colors.mutedForeground }]}>
               {weekTasks.length} 项即将到来
             </Text>
@@ -255,12 +305,8 @@ export default function DashboardScreen() {
         {/* Monthly */}
         <View style={[styles.monthCard, { backgroundColor: colors.card }]}>
           <View style={styles.sectionRow}>
-            <View
-              style={[styles.sectionDot, { backgroundColor: colors.warning }]}
-            />
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              本月计划
-            </Text>
+            <View style={[styles.sectionDot, { backgroundColor: colors.warning }]} />
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>本月计划</Text>
           </View>
           <Text style={[styles.monthBigNum, { color: colors.primary }]}>
             {monthCount}
@@ -288,6 +334,81 @@ export default function DashboardScreen() {
         <Feather name="plus" size={26} color="#fff" />
       </TouchableOpacity>
 
+      {/* Edit Greeting Modal */}
+      <Modal
+        visible={editingGreeting}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingGreeting(false)}
+      >
+        <TouchableOpacity
+          style={styles.greetingOverlay}
+          activeOpacity={1}
+          onPress={() => setEditingGreeting(false)}
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.greetingKeyboard}
+        >
+          <View
+            style={[
+              styles.greetingModal,
+              {
+                backgroundColor: colors.card,
+                paddingBottom: insets.bottom + 20,
+              },
+            ]}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.separator }]} />
+            <Text style={[styles.greetingModalTitle, { color: colors.foreground }]}>
+              编辑激励语
+            </Text>
+            <TextInput
+              style={[
+                styles.greetingInput,
+                {
+                  backgroundColor: colors.muted,
+                  color: colors.foreground,
+                  borderColor: colors.border,
+                },
+              ]}
+              value={draftGreeting}
+              onChangeText={setDraftGreeting}
+              placeholder="写下你的专属激励语..."
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              autoFocus
+              maxLength={60}
+            />
+            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>
+              {draftGreeting.length} / 60
+            </Text>
+            <View style={styles.greetingBtns}>
+              <TouchableOpacity
+                style={[styles.resetBtn, { borderColor: colors.border }]}
+                onPress={resetGreeting}
+              >
+                <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "600" }}>
+                  恢复默认
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveGreetingBtn,
+                  { backgroundColor: draftGreeting.trim() ? colors.primary : colors.border },
+                ]}
+                onPress={saveGreeting}
+                disabled={!draftGreeting.trim()}
+              >
+                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
+                  保存
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       <AddTaskModal
         visible={showAdd}
         onClose={() => setShowAdd(false)}
@@ -307,22 +428,27 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  header: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  dayName: { fontSize: 13, fontWeight: "400", letterSpacing: 0.2 },
+  greetingRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
-  },
-  dayName: {
-    fontSize: 13,
-    fontWeight: "400",
-    marginBottom: 6,
-    letterSpacing: 0.2,
+    gap: 8,
   },
   greeting: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "700",
     letterSpacing: 0.2,
     lineHeight: 30,
+    flex: 1,
+  },
+  editGreetingBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
   },
   progressRing: {
     width: 58,
@@ -335,7 +461,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   progressNum: { fontSize: 16, fontWeight: "700" },
-  progressPct: { fontSize: 10, fontWeight: "500", alignSelf: "flex-end", marginBottom: 2 },
+  progressPct: {
+    fontSize: 10,
+    fontWeight: "500",
+    alignSelf: "flex-end",
+    marginBottom: 2,
+  },
   sectionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -354,11 +485,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: "600" },
   emptyHint: { fontSize: 12 },
   completedHint: { fontSize: 12, marginTop: 4, marginLeft: 2 },
-  monthCard: {
-    borderRadius: 18,
-    padding: 22,
-    gap: 6,
-  },
+  monthCard: { borderRadius: 18, padding: 22, gap: 6 },
   monthBigNum: {
     fontSize: 52,
     fontWeight: "800",
@@ -379,5 +506,49 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
+  },
+  greetingOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(44,42,40,0.3)",
+  },
+  greetingKeyboard: { justifyContent: "flex-end" },
+  greetingModal: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingTop: 12,
+    paddingHorizontal: 22,
+    gap: 14,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+  },
+  greetingModalTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
+  greetingInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    fontSize: 16,
+    lineHeight: 24,
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  charCount: { fontSize: 11, textAlign: "right", marginTop: -8 },
+  greetingBtns: { flexDirection: "row", gap: 10 },
+  resetBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  saveGreetingBtn: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
   },
 });

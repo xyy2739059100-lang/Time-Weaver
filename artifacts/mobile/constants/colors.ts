@@ -9,7 +9,7 @@ const colors = {
     card: "#FAFAF8",
     cardForeground: "#2C2A28",
 
-    primary: "#8B9EA8",
+    primary: "#4D7285",
     primaryForeground: "#FFFFFF",
 
     secondary: "#E8E4DE",
@@ -49,7 +49,7 @@ const colors = {
     card: "#28261E",
     cardForeground: "#EDE9E4",
 
-    primary: "#8B9EA8",
+    primary: "#4D7285",
     primaryForeground: "#FFFFFF",
 
     secondary: "#38342E",
